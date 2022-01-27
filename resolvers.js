@@ -7,12 +7,10 @@ const resolvers = {
         getAllAppointments:async ()=>{
             
             return  await Appointment.find();
-
         }
     },
     Mutation:{
         createAppointment: async (parent,args,context,info)=>{
-            console.log(args)
             const {visit,cohorts}=args;
             const appointment = new Appointment({visit,cohorts});
             await appointment.save();

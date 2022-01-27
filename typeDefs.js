@@ -17,6 +17,7 @@ type Cohort{
 type Query{
     hello: String
     getAllAppointments: [Appointment]
+    
    
 }
 
