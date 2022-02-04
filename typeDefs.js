@@ -7,13 +7,18 @@ input CohortInput{
 }
  type Appointment{
      id:ID
-     visit: String
-     cohorts:[Cohort!]
+     visit: String!
+     cohorts:[Cohort!]!
     }
 type Cohort{
     month:String
     year:Int 
 }
+type AppointmentExistsError {
+  message: String!
+}
+
+union createAppointmentResult = Appointment | AppointmentExistsError
 type Query{
     hello: String
     getAllAppointments: [Appointment]
@@ -22,7 +27,7 @@ type Query{
 }
 
 type Mutation{
-    createAppointment(visit:String!,cohorts:[CohortInput!]!):Appointment
+    createAppointment(visit:String!,cohorts:[CohortInput!]!):createAppointmentResult
 }
 `;
 
