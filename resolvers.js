@@ -1,11 +1,13 @@
 const {UserInputError} = require('apollo-server-express');
+const { updateMany, findOneAndUpdate } = require('./models/appointment.model');
 const Appointment = require('./models/appointment.model')
 const Mock = require('./models/mock.model')
 const resolvers = {
+  //============Appointments CRUD UNION RESULTS====================
     createAppointmentResult: {
         __resolveType(obj, context, info){
-          // Only ppointmentExistsError has a message field
-          if(obj.message){
+          // Only AppointmentExistsError has a AppointmentExistsMessage field
+          if(obj.AppointmentExistsMessage){
             return 'AppointmentExistsError';
           }
         //   if(obj.booked){
@@ -16,12 +18,35 @@ const resolvers = {
             return 'Appointment';
           }
           return null; // GraphQLError is thrown
-        },
+        }
       },
+      updateAppointmentResult: {
+        __resolveType(obj, context, info){
+          // Only AppointmentNotFoundError an AppointmentNotFoundMessage field
+          if(obj.AppointmentNotFoundMessage){
+            return 'AppointmentNotFoundError';
+          }
+          if(obj.visit){
+            return 'Appointment';
+          }
+          return null; // GraphQLError is thrown
+        }
+      },
+      deleteAppointmentResult: {
+        __resolveType(obj, context, info){
+          // Only AppointmentNotFoundError an AppointmentNotFoundMessage field
+          if(obj.AppointmentNotFoundMessage){
+            return 'AppointmentNotFoundError';
+          }
+          if(obj.visit){
+            return 'Appointment';
+          }
+          return null; // GraphQLError is thrown
+        }
+      },
+      //============ END OF Appointments CRUD UNION RESULTS====================
     Query: {
-        hello:()=>{
-            return "Hello World"
-        },
+      //APPOINTMENTS QUERY RESOLVERS==========
         getAllAppointments:async ()=>{
             
             return  await Appointment.find();
@@ -29,9 +54,20 @@ const resolvers = {
         getAllMocks:async ()=>{
             
             return  await Mock.find();
+        },
+        getVisits: async(_,args)=>{
+         
+          const all = await Appointment.find()
+          all.forEach(function(a) {
+            a.cohorts.forEach(function(c){
+              
+            })
+        });
         }
+          // ====END OF APPOINTMENTS QUERY RESOLVERS==========
     },
     Mutation:{
+        //APPOINTMENTS MUTATION RESOLVERS==========
         async createMock(_,args){
             const {name,surname} = args    
             const foundMock = await Mock.find({name:name})
@@ -45,34 +81,46 @@ const resolvers = {
            
             return  newMock
         },
-         async createAppointment (_,args){
+          async createAppointment (_,args){
             const {visit,cohorts} = args
             const visitFound = await Appointment.find({visit:visit})
-            const cohortFound ={}
-            const all = await Appointment.find()
-            // for(var i=0;i<=all.length;i++){
-            //     for(var j=0;j<=all[i].cohorts.length;j++){
-            //         console.log(all[i].cohorts[j].month)
-            //        for(var c=0;c<=cohorts.length;c++){
-            //            if(all[i].cohorts[j].month==cohorts[c].month && all[i].cohorts[j].month==cohorts[c].year){
-            //                 cohortFound.visit=all[i].visit
-            //                 cohortFound.cohort=cohorts[j]
-            //            }
-            //        }
-            //     }
-            // }
+        
             if(visitFound.length>0){
-                return {message: `${args.visit} Already exists`}
+              return {AppointmentExistsMessage: `${args.visit} Already exists`}
                 
             } 
-            // else if(cohortFound){
-            //     return {booked:`${cohortFound.visit} already has ${cohortFound.cohort.month} ${cohortFound.cohort.year} `}
-            // }
             else{
-                    const appointment = new Appointment({visit,cohorts});
-                    return  await appointment.save();
-                    }
+                  const appointment = new Appointment({visit,cohorts});
+                  return  await appointment.save();
+                }
+          },
+          async updateAppointment(_,args){
+            
+            const filter = {visit:args.visit}
+            const update ={visit:args.visit,cohorts:args.cohorts}
+            
+            const there = await Appointment.find({visit:args.visit})
+          
+            if(there.length>0){
+              return await Appointment.findOneAndUpdate(filter, update, {new: true})
+
+            }else{
+              return {AppointmentNotFoundMessage: `${args.visit} Not Found`}
             }
+          },
+          async deleteAppointment(_,args){
+            const filter = {visit:args.visit}
+            const there = await Appointment.find({visit:args.visit})
+          
+            if(there.length>0){
+              return await Appointment.findOneAndDelete(filter)
+
+            }else{
+              return {AppointmentNotFoundMessage: `${args.visit} Not Found`}
+            }
+
+          }
+          //===END OF APPOINTMENTS MUTATION RESOLVERS==========
         
         },
     }
