@@ -1,14 +1,30 @@
+const bodyParser = require('body-parser');
+const cors = require('cors');
 const express = require('express')
 const {ApolloServer,gql} = require('apollo-server-express')
+const { ApolloServerPluginLandingPageGraphQLPlayground } = require('apollo-server-core')
 const typeDefs = require('./typeDefs')
 const resolvers = require('./resolvers')
 const mongoose = require('mongoose')
+const APP_URL = 'http://localhost:8080';
 
 async function startServer(){
     const app = express();
+    // Enable pre-flighting on all requests.
+// See: https://www.npmjs.com/package/cors#enabling-cors-pre-flight
+app.options('*', cors());
+// Only allow cross origin requests
+// coming from the URL specified above.
+app.use(cors({ origin: APP_URL }));
     const apolloServer = new ApolloServer({
         typeDefs,
-        resolvers
+        resolvers,
+        plugins: [
+            ApolloServerPluginLandingPageGraphQLPlayground({
+                // options
+            })
+            
+        ]
     });
     try {
         await apolloServer.start()

@@ -5,12 +5,14 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev"  : "nodemon index.js"
+    "dev": "nodemon index.js"
   },
   "author": "Nqaba Ndiweni",
   "license": "ISC",
   "dependencies": {
     "apollo-server-express": "^3.6.2",
+    "body-parser": "^1.19.2",
+    "cors": "^2.8.5",
     "express": "^4.17.2",
     "graphql": "^16.3.0",
     "mongoose": "^6.1.8"

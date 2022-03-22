@@ -38,6 +38,7 @@ union createAppointmentResult = Appointment | AppointmentExistsError
 union updateAppointmentResult = Appointment | AppointmentNotFoundError
 union deleteAppointmentResult = Appointment | AppointmentNotFoundError
 
+
 type Query{
     hello: String
     getAllAppointments: [Appointment]

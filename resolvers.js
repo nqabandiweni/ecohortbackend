@@ -48,7 +48,7 @@ const resolvers = {
     Query: {
       //APPOINTMENTS QUERY RESOLVERS==========
         getAllAppointments:async ()=>{
-            
+           
             return  await Appointment.find();
         },
         getAllMocks:async ()=>{
@@ -56,13 +56,18 @@ const resolvers = {
             return  await Mock.find();
         },
         getVisits: async(_,args)=>{
-         
+          const {cohort}= args
+          
           const all = await Appointment.find()
-          all.forEach(function(a) {
+          var visit = []
+         all.forEach(function(a) {
             a.cohorts.forEach(function(c){
-              
+              if(c.month == cohort.month && c.year == cohort.year){
+                 visit.push(a.visit)
+              }
             })
         });
+        return visit
         }
           // ====END OF APPOINTMENTS QUERY RESOLVERS==========
     },
@@ -82,6 +87,7 @@ const resolvers = {
             return  newMock
         },
           async createAppointment (_,args){
+            
             const {visit,cohorts} = args
             const visitFound = await Appointment.find({visit:visit})
         
@@ -95,7 +101,6 @@ const resolvers = {
                 }
           },
           async updateAppointment(_,args){
-            
             const filter = {visit:args.visit}
             const update ={visit:args.visit,cohorts:args.cohorts}
             
@@ -115,8 +120,7 @@ const resolvers = {
             if(there.length>0){
               return await Appointment.findOneAndDelete(filter)
 
-            }else{
-              return {AppointmentNotFoundMessage: `${args.visit} Not Found`}
+            }else{              return {AppointmentNotFoundMessage: `${args.visit} Not Found`}
             }
 
           }
