@@ -1,12 +1,15 @@
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const express = require('express')
+require('dotenv').config();
 const {ApolloServer,gql} = require('apollo-server-express')
 const { ApolloServerPluginLandingPageGraphQLPlayground } = require('apollo-server-core')
 const typeDefs = require('./typeDefs')
 const resolvers = require('./resolvers')
 const mongoose = require('mongoose')
-const APP_URL = 'http://localhost:8080';
+const uri = process.env.MONGODB_URI;
+const PORT = process.env.PORT || 5000
+
 
 async function startServer(){
     const app = express();
@@ -15,7 +18,7 @@ async function startServer(){
 app.options('*', cors());
 // Only allow cross origin requests
 // coming from the URL specified above.
-app.use(cors({ origin: APP_URL }));
+app.use(cors({ origin: "*"}));
     const apolloServer = new ApolloServer({
         typeDefs,
         resolvers,
@@ -32,14 +35,14 @@ app.use(cors({ origin: APP_URL }));
         app.use((req,res)=>{
             res.send("Hello from Express Server")
         })
-        await mongoose.connect('mongodb://localhost:27017/cohortsdb',{
+        await mongoose.connect(uri,{
             useUnifiedTopology: true,
             useNewUrlParser: true
         })
         .then(() =>console.log('Mongo good to go'))
         .catch(err => console.log(`DB error: \n ${err}`))
     
-        app.listen(4000,()=>console.log("running on Port 4000"))
+        app.listen(PORT,()=>console.log(`running on Port ${PORT}`))
 
     } catch (error) {
         console.log(`error starting up ${error}`)

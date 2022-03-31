@@ -1,5 +1,4 @@
 const {UserInputError} = require('apollo-server-express');
-const { updateMany, findOneAndUpdate } = require('./models/appointment.model');
 const Appointment = require('./models/appointment.model')
 const Mock = require('./models/mock.model')
 const resolvers = {
