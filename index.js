@@ -1,52 +1,50 @@
+const { ApolloServer } = require('apollo-server-express');
+const { ApolloServerPluginDrainHttpServer } = require('apollo-server-core');
+require('dotenv').config()
+const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const express = require('express')
-require('dotenv').config();
-const {ApolloServer,gql} = require('apollo-server-express')
-const { ApolloServerPluginLandingPageGraphQLPlayground } = require('apollo-server-core')
-const typeDefs = require('./typeDefs')
-const resolvers = require('./resolvers')
-const mongoose = require('mongoose')
-const uri = process.env.MONGODB_URI;
-const PORT = process.env.PORT || 5000
+const http = require('http');
+const  typeDefs = require('./typeDefs');
+const resolvers = require('./resolvers');
+const mongoose = require('mongoose');
 
+const PORT = process.env.port || 5000
 
-async function startServer(){
+const createContext = (request) => {
+
+    if(!request.req.headers.authorization){
+        return null
+    }else{
+        const token = request.req.headers.authorization
+        return {token}
+    }
+}
+
+async function startApolloServer() {
+  try {
     const app = express();
-    // Enable pre-flighting on all requests.
-// See: https://www.npmjs.com/package/cors#enabling-cors-pre-flight
-app.options('*', cors());
-// Only allow cross origin requests
-// coming from the URL specified above.
-app.use(cors({ origin: "*"}));
-    const apolloServer = new ApolloServer({
-        typeDefs,
-        resolvers,
-        plugins: [
-            ApolloServerPluginLandingPageGraphQLPlayground({
-                // options
-            })
-            
-        ]
+    const httpServer = http.createServer(app);
+    const server = new ApolloServer({
+      typeDefs,
+      resolvers,
+      context:createContext,
+      plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
     });
-    try {
-        await apolloServer.start()
-        apolloServer.applyMiddleware({app:app})
-        app.use((req,res)=>{
-            res.send("Hello from Express Server")
-        })
-        await mongoose.connect(uri,{
+    await server.start();
+    
+    server.applyMiddleware({ app });
+    await new Promise(resolve => httpServer.listen(PORT, resolve));
+    await mongoose.connect('mongodb://localhost:27017/cohortsdb',{
             useUnifiedTopology: true,
             useNewUrlParser: true
         })
         .then(() =>console.log('Mongo good to go'))
         .catch(err => console.log(`DB error: \n ${err}`))
-    
-        app.listen(PORT,()=>console.log(`running on Port ${PORT}`))
-
-    } catch (error) {
-        console.log(`error starting up ${error}`)
-    }
-    
+    console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
+  } catch (error) {
+      
+  }  
+  
 }
-startServer()
+startApolloServer()

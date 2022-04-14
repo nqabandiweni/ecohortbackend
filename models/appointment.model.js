@@ -17,7 +17,10 @@ const AppointmentSchema = new mongoose.Schema({
                 required:true
               }
         }
-    ]
+    ],
+    code:{
+        type:String
+    }
 });
 const Appointment = mongoose.model('appointment',AppointmentSchema);
 module.exports = Appointment;
