@@ -1,4 +1,5 @@
 const User = require('../../models/user.model')
+const getFacility = require('../../utilities/getFacility')
 const jwt = require("jsonwebtoken");
 const pick = require("lodash").pick;
 const bcrypt = require("bcrypt");
@@ -87,6 +88,20 @@ module.exports={
 
     },
     Query:{
+      getFacilityUsers: async(_,args,{token})=>{
+        if(!token){
+          return null
+        }
+        const facility = getFacility(token);
+        return  await User.find({code:facility});
+      },
+      getAdmins: async(_,args,{token})=>{
+        
+        if(!token){
+          return null
+        }
+        return await User.find({role:"admin"})
+      }
 
     }
 }

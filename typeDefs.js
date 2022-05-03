@@ -70,6 +70,8 @@ type Query{
     hello: String
     getAllAppointments: [Appointment]
     getVisits(cohort:CohortInput!):[String]
+    getFacilityUsers:[User]
+    getAdmins:[User]
 }
 
 type Mutation{
