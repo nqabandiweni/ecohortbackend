@@ -48,6 +48,9 @@ type userExistsError{
 type invalidUserError{
     invalidUserMessage:String!
 }
+type invalidDataError{
+    invalidDataMessage:String!
+}
 type userNotFoundError{
     userNotFoundMessage: String!
 }
@@ -59,7 +62,7 @@ type userNotFoundError{
  }
  
 union registrationResult = User | userExistsError | invalidUserError
-union loginResult = loginSuccess | userNotFoundError | invalidPasswordError
+union loginResult = loginSuccess | userNotFoundError | invalidPasswordError | invalidDataError
 union createAppointmentResult = Appointment | AppointmentExistsError | authorisationError
 union updateAppointmentResult = Appointment | AppointmentNotFoundError | authorisationError
 union deleteAppointmentResult = Appointment | AppointmentNotFoundError | authorisationError

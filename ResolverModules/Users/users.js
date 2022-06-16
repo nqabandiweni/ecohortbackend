@@ -10,6 +10,9 @@ module.exports={
         //============Users CRUD UNION RESULTS========================
         loginResult:{
             __resolveType(obj){
+              if(obj.invalidDataMessage){
+                return 'invalidDataError'
+              }
                 if(obj.userNotFoundMessage){
                     return 'userNotFoundError'
                 }
@@ -39,7 +42,9 @@ module.exports={
     Mutation:{
         //Users MUTATION RESOLVERS==========
         login: async (root, args, context) => {
-          
+          if(args.username==""){
+            return {invalidDataMessage:'username Required!'}
+          }
             // check if the user exists
             const user = await User.findOne({ username: args.username });
             if (!user) {
