@@ -3,6 +3,7 @@ const getFacility = require('../../utilities/getFacility')
 const jwt = require("jsonwebtoken");
 const pick = require("lodash").pick;
 const bcrypt = require("bcrypt");
+const getRole = require('../../utilities/getRole');
 const SECRET = process.env.SECRET
 
 module.exports={
@@ -73,40 +74,73 @@ module.exports={
             
             };
           },
-          async register(_,args) {
-           
-            const {name,surname,username,code,role} = args
-            var pass = args.password
-            const exists = await User.find({username:username})
-            if(exists.length>0){
-              return { userExistsMessage:`${args.username} exists`}
-            }
+          async register(_,args,{token}) {
+            const registrar = getRole(token)
+            const registrarCode = getFacility(token)
             if(args.name == "" || args.surname == "" || args.username =="" || args.password==""||args.code==""){
               return{invalidUserMessage:"Fill in all Fields"}
             }
-            password = await bcrypt.hash(pass, 12);
-            const user = new User({name,surname,username,password,code,role});
-            // save the user to the db
-            return  await user.save();
+            const {name,surname,username,code,role} = args
+            var pass = args.password
+            if(registrar=="admin"){
+              const existsInFacility = await User.find({username:username,code:registrarCode})
+              if(existsInFacility.length>0){
+                return { userExistsMessage:`${args.username} exists`}
+              }
+              if(role=="vendor"){
+                return {invalidUserMessage: "Admin cannot register a vendor"}
+              }
+              password = await bcrypt.hash(pass, 12);
+              const user = new User({name,surname,username,password,code,role});
+              // save the user to the db
+              return  await user.save();
+            }else if(registrar=="vendor"){
+              if(role=="vendor"){
+                if(code!="vendor"){
+                  return {invalidUserMessage:"Vendor Cannot Belong to a Facility"}
+                }else{
+                  const vendorExists= await User.find({username:username,code:"vendor"})
+                  if(vendorExists.length>0){
+                    return { userExistsMessage:`Vendor ${args.username} exists`}
+                  }
+                  password = await bcrypt.hash(pass, 12);
+                  const user = new User({name,surname,username,password,code,role});
+                  // save the user to the db
+                  return  await user.save();
+                }
+              }else if(role=="admin"){
+                const facilityUsers = await User.find({code:code})
+                const facilityExistence = facilityUsers.find((user)=>user.username==username)
+                if(facilityExistence.length>0){
+                  return { userExistsMessage:`${args.username} exists at this facility`}
+                }
+                password = await bcrypt.hash(pass, 12);
+                const user = new User({name,surname,username,password,code,role});
+                // save the user to the db
+                return  await user.save();
+              }
+            }
           },
           //End of Users MUTATION RESOLVERS==========
 
     },
     Query:{
-      getFacilityUsers: async(_,args,{token})=>{
+      getUsers: async(_,args,{token})=>{
         if(!token){
           return null
         }
-        const facility = getFacility(token);
-        return  await User.find({code:facility});
-      },
-      getAdmins: async(_,args,{token})=>{
+        const facilityCode = getFacility(token)
+        const role = getRole(token)
+        if(role=="admin"){
         
-        if(!token){
+          return await User.find({code:facilityCode})
+        }else if(role=="vendor"){
+          return await User.find({role:"admin"})
+        }else{
           return null
         }
-        return await User.find({role:"admin"})
       }
+
 
     }
 }
