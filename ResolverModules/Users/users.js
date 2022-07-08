@@ -75,33 +75,39 @@ module.exports={
             };
           },
           async register(_,args,{token}) {
+            
             const registrar = getRole(token)
             const registrarCode = getFacility(token)
-            if(args.name == "" || args.surname == "" || args.username =="" || args.password==""||args.code==""){
+            if(args.name == "" || args.surname == "" || args.username =="" || args.password==""||args.code==""||args.role==""){
+              
               return{invalidUserMessage:"Fill in all Fields"}
             }
             const {name,surname,username,code,role} = args
+          
             var pass = args.password
             if(registrar=="admin"){
               const existsInFacility = await User.find({username:username,code:registrarCode})
               if(existsInFacility.length>0){
-                return { userExistsMessage:`${args.username} exists`}
+                return { userExistsMessage:`${args.username} exists at this Facility`}
               }
               if(role=="vendor"){
                 return {invalidUserMessage: "Admin cannot register a vendor"}
               }
               password = await bcrypt.hash(pass, 12);
-              const user = new User({name,surname,username,password,code,role});
+              const user = new User({name,surname,username,password,code:registrarCode,role});
               // save the user to the db
               return  await user.save();
             }else if(registrar=="vendor"){
+              
               if(role=="vendor"){
                 if(code!="vendor"){
+                 
                   return {invalidUserMessage:"Vendor Cannot Belong to a Facility"}
                 }else{
+                 
                   const vendorExists= await User.find({username:username,code:"vendor"})
                   if(vendorExists.length>0){
-                    return { userExistsMessage:`Vendor ${args.username} exists`}
+                    return { userExistsMessage:`Vendor ${args.username} already exists`}
                   }
                   password = await bcrypt.hash(pass, 12);
                   const user = new User({name,surname,username,password,code,role});
@@ -109,8 +115,9 @@ module.exports={
                   return  await user.save();
                 }
               }else if(role=="admin"){
-                const facilityUsers = await User.find({code:code})
-                const facilityExistence = facilityUsers.find((user)=>user.username==username)
+               
+                const facilityExistence = await User.find({code:code,username:username})
+                console.log(facilityExistence)
                 if(facilityExistence.length>0){
                   return { userExistsMessage:`${args.username} exists at this facility`}
                 }

@@ -8,7 +8,7 @@ const http = require('http');
 const  typeDefs = require('./typeDefs');
 const resolvers = require('./resolvers');
 const mongoose = require('mongoose');
-
+const loc = 'mongodb://127.0.0.1:27017/cohortsdb'
 const PORT = process.env.port || 5000
 
 const createContext = (request) => {
@@ -35,7 +35,7 @@ async function startApolloServer() {
     
     server.applyMiddleware({ app });
     await new Promise(resolve => httpServer.listen(PORT, resolve));
-    await mongoose.connect(process.env.MONGODB_URI,{
+    await mongoose.connect(loc,{
             useUnifiedTopology: true,
             useNewUrlParser: true
         })

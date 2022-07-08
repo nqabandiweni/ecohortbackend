@@ -60,12 +60,16 @@ type userNotFoundError{
  type authorisationError{
      authorisationMessage:String!
  }
+ type FacilityExistsError{
+    facilityExistsMessage:String!
+ }
  
 union registrationResult = User | userExistsError | invalidUserError
 union loginResult = loginSuccess | userNotFoundError | invalidPasswordError | invalidDataError
 union createAppointmentResult = Appointment | AppointmentExistsError | authorisationError
 union updateAppointmentResult = Appointment | AppointmentNotFoundError | authorisationError
 union deleteAppointmentResult = Appointment | AppointmentNotFoundError | authorisationError
+union createFacilityResult = Facility | FacilityExistsError | invalidFacilityError
 
 
 
@@ -74,6 +78,7 @@ type Query{
     getAllAppointments: [Appointment]
     getVisits(cohort:CohortInput!):[String]
     getUsers:[User]
+    getFacilities:[Facility]
 }
 
 type Mutation{

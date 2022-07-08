@@ -1,5 +1,6 @@
 const appointmentsResolvers = require('./Appointments/appointments');
 const userResolvers =  require('./Users/users')
+const facilitiesResolvers = require('./Facilities/facilities')
 
 module.exports = {
     resolveTypes:{
@@ -8,7 +9,8 @@ module.exports = {
     },
     Query: {
         ...appointmentsResolvers.Query,
-        ...userResolvers.Query
+        ...userResolvers.Query,
+        ...facilitiesResolvers.Query
     },
     Mutation: {
         ...appointmentsResolvers.Mutation,
