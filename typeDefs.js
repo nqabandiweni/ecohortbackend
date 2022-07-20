@@ -16,8 +16,8 @@ type Cohort{
      code:String!
     }
 type Facility{
-    name:String
-    code:String
+    name:String!
+    code:String!
 }
 type User{
     name:String
@@ -63,6 +63,9 @@ type userNotFoundError{
  type FacilityExistsError{
     facilityExistsMessage:String!
  }
+ type invalidFacilityError{
+    invalidFacilityMessage: String
+ }
  
 union registrationResult = User | userExistsError | invalidUserError
 union loginResult = loginSuccess | userNotFoundError | invalidPasswordError | invalidDataError
@@ -87,6 +90,7 @@ type Mutation{
     deleteAppointment(visit:String!):deleteAppointmentResult
     login(username:String!,password:String!):loginResult
     register(name:String!,surname:String!,username:String!,password:String!,code:String!,role:String!):registrationResult
+    createFacility(name:String!,code:String!):createFacilityResult
 }
 `;
 
