@@ -5,7 +5,8 @@ const facilitiesResolvers = require('./Facilities/facilities')
 module.exports = {
     resolveTypes:{
         ...appointmentsResolvers.resolveTypes,
-        ...userResolvers.resolveTypes
+        ...userResolvers.resolveTypes,
+        ...facilitiesResolvers.resolveTypes
     },
     Query: {
         ...appointmentsResolvers.Query,

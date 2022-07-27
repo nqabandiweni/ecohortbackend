@@ -7,6 +7,7 @@ module.exports = function getRole(token){
         const role = jwt.verify(parsed,process.env.SECRET,(err)=>{
            
             if(err){
+   
                 return null
             }else{
                 const decoded = jwt.decode(parsed,process.env.SECRET)

@@ -78,7 +78,7 @@ module.exports={
             
             const registrar = getRole(token)
             const registrarCode = getFacility(token)
-            if(args.name == "" || args.surname == "" || args.username =="" || args.password==""||args.code==""||args.role==""){
+            if(args.name == "" || args.surname == "" || args.username =="" || args.password==""){
               
               return{invalidUserMessage:"Fill in all Fields"}
             }
@@ -94,11 +94,13 @@ module.exports={
                 return {invalidUserMessage: "Admin cannot register a vendor"}
               }
               password = await bcrypt.hash(pass, 12);
-              const user = new User({name,surname,username,password,code:registrarCode,role});
+              const user = new User({name,surname,username,password,code:registrarCode,role:"user"});
               // save the user to the db
               return  await user.save();
             }else if(registrar=="vendor"){
-              
+               if(args.code==""||args.role==""){
+                  return{invalidUserMessage:"Facility and Role Required!"}
+                }
               if(role=="vendor"){
                 if(code!="vendor"){
                  
@@ -115,9 +117,7 @@ module.exports={
                   return  await user.save();
                 }
               }else if(role=="admin"){
-               
                 const facilityExistence = await User.find({code:code,username:username})
-                console.log(facilityExistence)
                 if(facilityExistence.length>0){
                   return { userExistsMessage:`${args.username} exists at this facility`}
                 }
