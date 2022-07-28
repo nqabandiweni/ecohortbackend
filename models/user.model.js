@@ -25,6 +25,10 @@ const UserSchema = new mongoose.Schema({
     role:{
         type:String,
         required:true
+    },
+    isNewbie:{
+        type:Boolean,
+        default:true
     }
 });
 const User = mongoose.model('User',UserSchema);

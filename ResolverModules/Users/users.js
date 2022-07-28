@@ -5,6 +5,7 @@ const pick = require("lodash").pick;
 const bcrypt = require("bcrypt");
 const getRole = require('../../utilities/getRole');
 const SECRET = process.env.SECRET
+const generator = require('generate-password')
 
 module.exports={
     resolveTypes:{
@@ -33,11 +34,33 @@ module.exports={
                 if(obj.invalidUserMessage){
                     return 'invalidUserError'
                 }
-                if(obj.code){
-                    return 'User'
+                if(obj.username && obj.temporaryPassword){
+                    return 'successfulRegistration'
                 }
             }
         },
+        activationResult:{
+          __resolveType(obj){
+              if(obj.invalidActivationMessage){
+                  return 'invalidActivationError'
+              }
+              if(obj.passwordMismatchMessage){
+                  return 'passwordMismatchError'
+              }
+              if(obj.userNotFoundMessage){
+                  return 'userNotFoundError'
+              }
+              if(obj.alreadyActivatedMessage){
+                  return 'alreadyActivatedError'
+              }
+              if(invalidTemporaryPasswordMessage){
+                  return 'invalidTemporaryMessageError'
+              }
+              if(obj.successMessage){
+                  return 'successfulActivation'
+              }
+          }
+      },
     //============END OF Users CRUD UNION RESULTS====================
     },
     Mutation:{
@@ -78,13 +101,11 @@ module.exports={
             
             const registrar = getRole(token)
             const registrarCode = getFacility(token)
-            if(args.name == "" || args.surname == "" || args.username =="" || args.password==""){
+            if(args.name == "" || args.surname == "" || args.username =="" ){
               
               return{invalidUserMessage:"Fill in all Fields"}
             }
             const {name,surname,username,code,role} = args
-          
-            var pass = args.password
             if(registrar=="admin"){
               const existsInFacility = await User.find({username:username,code:registrarCode})
               if(existsInFacility.length>0){
@@ -93,10 +114,19 @@ module.exports={
               if(role=="vendor"){
                 return {invalidUserMessage: "Admin cannot register a vendor"}
               }
-              password = await bcrypt.hash(pass, 12);
-              const user = new User({name,surname,username,password,code:registrarCode,role:"user"});
+              var genpassword = generator.generate({
+                length: 6,
+                numbers: true
+              });
+              var user = new User({name,surname,username,code:registrarCode,role:"user"});
+              user.password = genpassword
+              const salt = await bcrypt.genSalt(10);
+              //encrypt password
+              user.password = await bcrypt.hash(user.password, salt);
               // save the user to the db
-              return  await user.save();
+              await user.save();
+              user.password=genpassword
+              return {username:user.username,temporaryPassword:user.password}
             }else if(registrar=="vendor"){
                if(args.code==""||args.role==""){
                   return{invalidUserMessage:"Facility and Role Required!"}
@@ -111,23 +141,73 @@ module.exports={
                   if(vendorExists.length>0){
                     return { userExistsMessage:`Vendor ${args.username} already exists`}
                   }
-                  password = await bcrypt.hash(pass, 12);
-                  const user = new User({name,surname,username,password,code,role});
+                  var genpassword = generator.generate({
+                    length: 6,
+                    numbers: true
+                  });
+                  var user = new User({name,surname,username,code,role});
+                  user.password = genpassword
+                  const salt = await bcrypt.genSalt(10);
+                  //encrypt password
+                  user.password = await bcrypt.hash(user.password, salt);
                   // save the user to the db
-                  return  await user.save();
+                  await user.save();
+                  user.password=genpassword
+                  return {username:user.username,temporaryPassword:user.password}
                 }
               }else if(role=="admin"){
+                if(args.code=="vendor"){
+                  return{invalidUserMessage:"Vendor Cannot Belong to a Facility!"}
+                }
                 const facilityExistence = await User.find({code:code,username:username})
                 if(facilityExistence.length>0){
                   return { userExistsMessage:`${args.username} exists at this facility`}
                 }
-                password = await bcrypt.hash(pass, 12);
-                const user = new User({name,surname,username,password,code,role});
-                // save the user to the db
-                return  await user.save();
+                var genpassword = generator.generate({
+                  length: 6,
+                  numbers: true
+                });
+               
+                var user = new User({name,surname,username,code,role});
+                user.password = genpassword
+                  const salt = await bcrypt.genSalt(10);
+                  //encrypt password
+                  user.password = await bcrypt.hash(user.password, salt);
+                  // save the user to the db
+                  await user.save();
+                  user.password=genpassword
+                  return {username:user.username,temporaryPassword:user.password}
               }
             }
           },
+          async activate(_,args){
+            const {username,temporaryPassword,password,confirmPassword}=args
+            if(username==""||temporaryPassword==""||password==""||confirmPassword==""){
+              return {invalidActivationMessage:"Enter all Fields!"}
+            }
+            // check if the user exists
+            const user = await User.findOne({ username: username });
+            if (!user) {
+              return{userNotFoundMessage:`${username} not Found`}
+            }
+            if(user.isNewbie){
+              return{alreadyActivatedMessage:`${user.username} Already Activated, Login Instead`}
+            }
+            // check if the password matches the hashed one we already have
+            const isValid = await bcrypt.compare(temporaryPassword, user.password);
+            if (!isValid) {
+              return{invalidTemporaryPasswordMessage:"Incorrect Temporary Password"}
+            }
+            if(password!==confirmPassword){
+              return{passwordMismatchMessage:"Passwords do not Match"}
+            }
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(password,salt)
+            user.isNewbie=false
+            await user.save()
+            return{successMessage:`${user.username} Can Login Now`}
+
+          }
           //End of Users MUTATION RESOLVERS==========
 
     },
