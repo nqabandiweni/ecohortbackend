@@ -38,6 +38,9 @@ type loginSuccess{
     username:String!
     token: String!
 }
+type unactivatedUserError{
+    unactivatedUserMessage:String!
+}
 
 type userExistsError{
     userExistsMessage:String!
@@ -84,7 +87,7 @@ type userNotFoundError{
  }
  
 union registrationResult = successfulRegistration | userExistsError | invalidUserError
-union loginResult = loginSuccess | userNotFoundError | invalidPasswordError | invalidDataError
+union loginResult = loginSuccess | userNotFoundError | invalidPasswordError | invalidDataError |unactivatedUserError
 union createAppointmentResult = Appointment | AppointmentExistsError | authorisationError
 union updateAppointmentResult = Appointment | AppointmentNotFoundError | authorisationError
 union deleteAppointmentResult = Appointment | AppointmentNotFoundError | authorisationError

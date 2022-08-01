@@ -24,6 +24,9 @@ module.exports={
                 if(obj.token){
                     return 'loginSuccess' 
                 }
+                if(obj.unactivatedUserMessage){
+                  return 'unactivatedUserError'
+                }
             }
         },
         registrationResult:{
@@ -53,8 +56,8 @@ module.exports={
               if(obj.alreadyActivatedMessage){
                   return 'alreadyActivatedError'
               }
-              if(invalidTemporaryPasswordMessage){
-                  return 'invalidTemporaryMessageError'
+              if(obj.invalidTemporaryPasswordMessage){
+                  return 'invalidTemporaryPasswordError'
               }
               if(obj.successMessage){
                   return 'successfulActivation'
@@ -73,6 +76,9 @@ module.exports={
             const user = await User.findOne({ username: args.username });
             if (!user) {
               return{userNotFoundMessage:`${args.username} not Found`}
+            }
+            if(user.isNewbie){
+              return{unactivatedUserMessage:`${user.username} Should Activate Account First`}
             }
             // check if the password matches the hashed one we already have
             const isValid = await bcrypt.compare(args.password, user.password);
@@ -190,7 +196,7 @@ module.exports={
             if (!user) {
               return{userNotFoundMessage:`${username} not Found`}
             }
-            if(user.isNewbie){
+            if(!user.isNewbie){
               return{alreadyActivatedMessage:`${user.username} Already Activated, Login Instead`}
             }
             // check if the password matches the hashed one we already have
