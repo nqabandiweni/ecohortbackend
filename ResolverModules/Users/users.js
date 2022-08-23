@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const getRole = require('../../utilities/getRole');
 const SECRET = process.env.SECRET
 const generator = require('generate-password')
+var validator = require('validator');
 
 module.exports={
     resolveTypes:{
@@ -37,7 +38,7 @@ module.exports={
                 if(obj.invalidUserMessage){
                     return 'invalidUserError'
                 }
-                if(obj.username && obj.temporaryPassword){
+                if(obj.email && obj.temporaryPassword){
                     return 'successfulRegistration'
                 }
             }
@@ -69,16 +70,23 @@ module.exports={
     Mutation:{
         //Users MUTATION RESOLVERS==========
         login: async (root, args, context) => {
-          if(args.username==""){
-            return {invalidDataMessage:'username Required!'}
+      
+          if(args.email==""){
+            return {invalidDataMessage:'email Required!'}
+          }
+          if(!validator.isEmail(args.email)){
+            return{invalidDataMessage:"Invalid Email Address"}
+
           }
             // check if the user exists
-            const user = await User.findOne({ username: args.username });
+            const user = await User.findOne({ email: args.email });
+            
             if (!user) {
-              return{userNotFoundMessage:`${args.username} not Found`}
+              return{userNotFoundMessage:`${args.email} not Found`}
             }
-            if(user.isNewbie){
-              return{unactivatedUserMessage:`${user.username} Should Activate Account First`}
+            
+            if(user.isNewbie==true){
+              return{unactivatedUserMessage:`${user.email} Should Activate Account First`}
             }
             // check if the password matches the hashed one we already have
             const isValid = await bcrypt.compare(args.password, user.password);
@@ -89,7 +97,7 @@ module.exports={
             // if the user exist then create a token for them
             const token = await jwt.sign(
               {
-                user: pick(user, ["_id", "username","role","code"])
+                user: pick(user, ["_id","name", "email","role","code"])
               },
               SECRET,
               // this token will last for a day, but you can change it
@@ -98,24 +106,26 @@ module.exports={
             );
          
             return {
-                    token:token,
-                    username:user.username
-            
+                    token:token
             };
           },
           async register(_,args,{token}) {
             
             const registrar = getRole(token)
             const registrarCode = getFacility(token)
-            if(args.name == "" || args.surname == "" || args.username =="" ){
+            if(args.name == "" || args.surname == "" || args.email =="" ){
               
               return{invalidUserMessage:"Fill in all Fields"}
             }
-            const {name,surname,username,code,role} = args
+            const {name,surname,email,code,role} = args
+            if(!validator.isEmail(email)){
+              return{invalidUserMessage:"Invalid Email Address"}
+
+            }
             if(registrar=="admin"){
-              const existsInFacility = await User.find({username:username,code:registrarCode})
+              const existsInFacility = await User.find({email:email})
               if(existsInFacility.length>0){
-                return { userExistsMessage:`${args.username} exists at this Facility`}
+                return { userExistsMessage:`${args.email} exists`}
               }
               if(role=="vendor"){
                 return {invalidUserMessage: "Admin cannot register a vendor"}
@@ -124,7 +134,7 @@ module.exports={
                 length: 6,
                 numbers: true
               });
-              var user = new User({name,surname,username,code:registrarCode,role:"user"});
+              var user = new User({name,surname,email,code:registrarCode,role:"user"});
               user.password = genpassword
               const salt = await bcrypt.genSalt(10);
               //encrypt password
@@ -132,7 +142,7 @@ module.exports={
               // save the user to the db
               await user.save();
               user.password=genpassword
-              return {username:user.username,temporaryPassword:user.password}
+              return {email:user.email,temporaryPassword:user.password}
             }else if(registrar=="vendor"){
                if(args.code==""||args.role==""){
                   return{invalidUserMessage:"Facility and Role Required!"}
@@ -143,15 +153,15 @@ module.exports={
                   return {invalidUserMessage:"Vendor Cannot Belong to a Facility"}
                 }else{
                  
-                  const vendorExists= await User.find({username:username,code:"vendor"})
+                  const vendorExists= await User.find({email:email,code:"vendor"})
                   if(vendorExists.length>0){
-                    return { userExistsMessage:`Vendor ${args.username} already exists`}
+                    return { userExistsMessage:`Vendor ${args.email} already exists`}
                   }
                   var genpassword = generator.generate({
                     length: 6,
                     numbers: true
                   });
-                  var user = new User({name,surname,username,code,role});
+                  var user = new User({name,surname,email,code,role});
                   user.password = genpassword
                   const salt = await bcrypt.genSalt(10);
                   //encrypt password
@@ -159,22 +169,22 @@ module.exports={
                   // save the user to the db
                   await user.save();
                   user.password=genpassword
-                  return {username:user.username,temporaryPassword:user.password}
+                  return {email:user.email,temporaryPassword:user.password}
                 }
               }else if(role=="admin"){
                 if(args.code=="vendor"){
                   return{invalidUserMessage:"Vendor Cannot Belong to a Facility!"}
                 }
-                const facilityExistence = await User.find({code:code,username:username})
+                const facilityExistence = await User.find({email:email})
                 if(facilityExistence.length>0){
-                  return { userExistsMessage:`${args.username} exists at this facility`}
+                  return { userExistsMessage:`${args.email} exists`}
                 }
                 var genpassword = generator.generate({
                   length: 6,
                   numbers: true
                 });
                
-                var user = new User({name,surname,username,code,role});
+                var user = new User({name,surname,email,code,role});
                 user.password = genpassword
                   const salt = await bcrypt.genSalt(10);
                   //encrypt password
@@ -182,22 +192,22 @@ module.exports={
                   // save the user to the db
                   await user.save();
                   user.password=genpassword
-                  return {username:user.username,temporaryPassword:user.password}
+                  return {email:user.email,temporaryPassword:user.password}
               }
             }
           },
           async activate(_,args){
-            const {username,temporaryPassword,password,confirmPassword}=args
-            if(username==""||temporaryPassword==""||password==""||confirmPassword==""){
+            const {email,temporaryPassword,password,confirmPassword}=args
+            if(email==""||temporaryPassword==""||password==""||confirmPassword==""){
               return {invalidActivationMessage:"Enter all Fields!"}
             }
             // check if the user exists
-            const user = await User.findOne({ username: username });
+            const user = await User.findOne({ email: email });
             if (!user) {
-              return{userNotFoundMessage:`${username} not Found`}
+              return{userNotFoundMessage:`${email} not Found`}
             }
             if(!user.isNewbie){
-              return{alreadyActivatedMessage:`${user.username} Already Activated, Login Instead`}
+              return{alreadyActivatedMessage:`${user.email} Already Activated, Login Instead`}
             }
             // check if the password matches the hashed one we already have
             const isValid = await bcrypt.compare(temporaryPassword, user.password);
@@ -211,7 +221,7 @@ module.exports={
             user.password = await bcrypt.hash(password,salt)
             user.isNewbie=false
             await user.save()
-            return{successMessage:`${user.username} Can Login Now`}
+            return{successMessage:`${user.email} Can Login Now`}
 
           }
           //End of Users MUTATION RESOLVERS==========
@@ -228,7 +238,8 @@ module.exports={
         
           return await User.find({code:facilityCode})
         }else if(role=="vendor"){
-          return await User.find({role:"admin"})
+          console.log("here")
+          return await User.find()
         }else{
           return null
         }

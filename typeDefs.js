@@ -22,7 +22,7 @@ type Facility{
 type User{
     name:String
     surname:String
-    username:String
+    email:String
     password:String
     code:String
     role:String
@@ -35,7 +35,6 @@ type AppointmentNotFoundError{
 }
 
 type loginSuccess{
-    username:String!
     token: String!
 }
 type unactivatedUserError{
@@ -67,7 +66,7 @@ type userNotFoundError{
     invalidFacilityMessage: String!
  }
  type successfulRegistration{
-    username:String!
+    email:String!
     temporaryPassword:String!
  }
  type successfulActivation{
@@ -108,10 +107,10 @@ type Mutation{
     createAppointment(visit:String!,cohorts:[CohortInput!]!):createAppointmentResult
     updateAppointment(visit:String!,cohorts:[CohortInput!]!):updateAppointmentResult
     deleteAppointment(visit:String!):deleteAppointmentResult
-    login(username:String!,password:String!):loginResult
-    register(name:String!,surname:String!,username:String!,code:String!,role:String!):registrationResult
+    login(email:String!,password:String!):loginResult
+    register(name:String!,surname:String!,email:String!,code:String!,role:String!):registrationResult
     createFacility(name:String!,code:String!):createFacilityResult
-    activate(username:String!,temporaryPassword:String!,password:String!,confirmPassword:String!):activationResult
+    activate(email:String!,temporaryPassword:String!,password:String!,confirmPassword:String!):activationResult
 }
 `;
 
