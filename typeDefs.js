@@ -84,7 +84,11 @@ type userNotFoundError{
  type invalidActivationError{
     invalidActivationMessage:String!
  }
- 
+
+ type successfulPasswordReset{
+    email:String!
+    temporaryPassword:String!
+ }
 union registrationResult = successfulRegistration | userExistsError | invalidUserError
 union loginResult = loginSuccess | userNotFoundError | invalidPasswordError | invalidDataError |unactivatedUserError
 union createAppointmentResult = Appointment | AppointmentExistsError | authorisationError
@@ -92,6 +96,9 @@ union updateAppointmentResult = Appointment | AppointmentNotFoundError | authori
 union deleteAppointmentResult = Appointment | AppointmentNotFoundError | authorisationError
 union createFacilityResult = Facility | facilityExistsError | invalidFacilityError
 union activationResult = successfulActivation | passwordMismatchError | alreadyActivatedError | invalidTemporaryPasswordError | invalidActivationError |userNotFoundError
+union deleteUserResult = authorisationError | userNotFoundError | User
+union resetPasswordResult = userNotFoundError | successfulPasswordReset
+
 
 
 
@@ -111,6 +118,9 @@ type Mutation{
     register(name:String!,surname:String!,email:String!,code:String!,role:String!):registrationResult
     createFacility(name:String!,code:String!):createFacilityResult
     activate(email:String!,temporaryPassword:String!,password:String!,confirmPassword:String!):activationResult
+    deleteUser(email:String!): deleteUserResult
+    resetPassword(email:String!):resetPasswordResult
+    
 }
 `;
 

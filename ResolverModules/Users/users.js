@@ -65,10 +65,39 @@ module.exports={
               }
           }
       },
+      deleteUserResult: {
+        __resolveType(obj){
+          if(obj.authorisationMessage){
+            return 'authorisationError';
+          }
+          // Only UserNotFoundError an UserNotFoundMessage field
+          if(obj.userNotFoundMessage){
+            return 'userNotFoundError';
+          }
+          if(obj.email){
+            return 'User';
+          }
+          return null; // GraphQLError is thrown
+        }
+      },
+      resetPasswordResult:{
+        __resolveType(obj){
+          if(obj.userNotFoundMessage){
+            return 'userNotFoundError'
+          }
+          if(obj.email && obj.temporaryPassword){
+            return 'successfulPasswordReset'
+          }
+          return null; // GraphQLError is thrown
+        }
+      }
+      
     //============END OF Users CRUD UNION RESULTS====================
     },
     Mutation:{
         //Users MUTATION RESOLVERS==========
+
+        //=======LOGIN==============================
         login: async (root, args, context) => {
       
           if(args.email==""){
@@ -109,6 +138,9 @@ module.exports={
                     token:token
             };
           },
+          //=======END OF LOGIN==============================
+
+          //=======REGISTER==============================
           async register(_,args,{token}) {
             
             const registrar = getRole(token)
@@ -196,11 +228,16 @@ module.exports={
               }
             }
           },
+          //=======END OF REGISTER==============================
+
+          //=======ACTIVATE==============================
           async activate(_,args){
+          
             const {email,temporaryPassword,password,confirmPassword}=args
             if(email==""||temporaryPassword==""||password==""||confirmPassword==""){
               return {invalidActivationMessage:"Enter all Fields!"}
             }
+            
             // check if the user exists
             const user = await User.findOne({ email: email });
             if (!user) {
@@ -223,7 +260,55 @@ module.exports={
             await user.save()
             return{successMessage:`${user.email} Can Login Now`}
 
+          },
+          //=======END OF ACTIVATE==============================
+          //=======DELETE==============================
+          async deleteUser(_,args,{token}){
+            if(!token){
+              return{authorisationMessage:"Login First!"}
+            }
+            
+            const registrar = getRole(token)
+            const filter = {email:args.email}
+            const there = await User.find(filter)
+            if(there.length>0){
+              const role = there[0].role
+             
+              if(role=="vendor" && registrar=="admin"){
+                return{authorisationMessage:"Admin Cannot Delete Vendor"}
+              }
+               
+              return  await User.findOneAndDelete(filter)
+          
+            }else{ 
+               return {userNotFoundMessage: `${args.email} Not Found`}
+            }
+
+          },
+          //======= END OF DELETE==============================
+
+          //=======PASSWORD RESET==============================
+          async resetPassword (_,args,{token}){
+            const {email} = args
+            // check if the user exists
+            const user = await User.findOne({ email: email });
+            if (!user) {
+              return{userNotFoundMessage:`${args.email} not Found`}
+            }
+            user.isNewbie=true
+            var temporaryPassword = generator.generate({
+              length: 6,
+              numbers: true
+            });
+            const salt = await bcrypt.genSalt(10);
+            //encrypt password
+            user.password = await bcrypt.hash(temporaryPassword, salt);
+            await user.save()
+            return{email:email,temporaryPassword:temporaryPassword}
           }
+          
+          //=======END OF PASSWORD RESET==============================
+
           //End of Users MUTATION RESOLVERS==========
 
     },
@@ -238,8 +323,8 @@ module.exports={
         
           return await User.find({code:facilityCode})
         }else if(role=="vendor"){
-          console.log("here")
-          return await User.find()
+          
+          return await User.find({role:{$in:["vendor","admin"]}})
         }else{
           return null
         }
@@ -248,3 +333,4 @@ module.exports={
 
     }
 }
+
