@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js",
-    "postinstall": "npm run build", 
+    "dev": "nodemon index.js", 
      "start": "node index.js" 
   },
   "author": "Nqaba Ndiweni",
