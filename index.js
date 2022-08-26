@@ -41,7 +41,7 @@ async function startApolloServer() {
         })
         .then(() =>console.log('Mongo good to go'))
         .catch(err => console.log(`DB error: \n ${err}`))
-    console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
+    console.log(`🚀 Server ready at ${PORT}${server.graphqlPath}`);
   } catch (error) {
       
   }  
