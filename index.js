@@ -37,7 +37,7 @@ async function startApolloServer() {
     
     server.applyMiddleware({ app });
     await new Promise(resolve => httpServer.listen(process.env.PORT || 3000, resolve));
-    await mongoose.connect(loc,{
+    await mongoose.connect(process.env.MONGODB_URI,{
             useUnifiedTopology: true,
             useNewUrlParser: true
         })
