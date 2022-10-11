@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js", 
-     "start": "node index.js" 
+    "dev": "nodemon index.js",
+    "start": "node index.js"
   },
   "author": "Nqaba Ndiweni",
   "license": "ISC",
@@ -19,10 +19,12 @@
     "express": "^4.17.2",
     "express-graphql": "^0.12.0",
     "generate-password": "^1.7.0",
+    "graphql": "^16.6.0",
     "http": "0.0.1-security",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
     "mongoose": "^6.1.8",
+    "node-cron": "^3.0.2",
     "validator": "^13.7.0"
   },
   "devDependencies": {
