@@ -108,6 +108,7 @@ type Query{
     getVisits(cohort:CohortInput!):[String]
     getUsers:[User]
     getFacilities:[Facility]
+    getDayCohorts(visit:String!):[Cohort]
 }
 
 type Mutation{

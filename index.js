@@ -1,6 +1,8 @@
 const { ApolloServer } = require('apollo-server-express');
 const { ApolloServerPluginDrainHttpServer } = require('apollo-server-core');
-require('dotenv').config()
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -43,9 +45,9 @@ async function startApolloServer() {
         })
         .then(() =>console.log('Mongo good to go'))
         .catch(err => console.log(`DB error: \n ${err}`))
-    console.log(`🚀 Server ready at ${PORT}${server.graphqlPath}`);
+    console.log(`🚀 Server ready at ${process.env.PORT}${server.graphqlPath}`);
   } catch (error) {
-      
+      console.log(error)
   }  
   
 }

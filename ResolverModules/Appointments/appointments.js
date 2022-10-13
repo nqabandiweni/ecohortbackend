@@ -78,6 +78,28 @@ module.exports={
             })
         });
         return visit
+        },
+        getDayCohorts: async(_,args,{token})=>{
+          const {visit} = args
+          const facility = getFacility(token);
+          const appointment = await Appointment.findOne({visit:visit,code:facility})
+          
+          var cohorts= []
+          if(appointment){
+            if(appointment.cohorts.length>=1){
+              for(var i=0;i<appointment.cohorts.length;i++){
+                cohorts.push({month:appointment.cohorts[i].month,year:appointment.cohorts[i].year})
+              }
+              return cohorts
+            }else{
+              return []
+            }
+          }else{
+              return []
+          }
+          
+  
+
         }
           // ====END OF APPOINTMENTS QUERY RESOLVERS==========
     },

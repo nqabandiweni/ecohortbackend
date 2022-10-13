@@ -9,7 +9,7 @@ module.exports=function getFacility(token){
         const code =jwt.verify(parsed,process.env.SECRET,(err)=>{
            
             if(err){
-                //console.log(err)
+                console.log(err)
                 return null
             }else{
                 const decoded = jwt.decode(parsed,process.env.SECRET)
